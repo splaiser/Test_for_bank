@@ -1,0 +1,73 @@
+## Создаем таблицы
+CREATE TABLE products (
+	id serial primary key,
+	name text,
+	price numeric
+);
+CREATE TABLE sales (
+	id serial primary key,
+	date DATE	
+);
+CREATE TABLE sales_details (
+	id serial primary key,
+	sale_id INTEGER REFERENCES sales(id),
+	product_id INTEGER REFERENCES products(id),
+	count INTEGER
+)
+##
+
+## Наполняем таблицы данными
+INSERT INTO products (name, price) VALUES ('milk', 30);
+INSERT INTO products (name, price) VALUES ('salt', 10);
+INSERT INTO products (name, price) VALUES ('bread', 20);
+INSERT INTO products (name, price) VALUES ('meat', 50);
+
+
+INSERT INTO sales (date) VALUES ('2021-01-01');
+INSERT INTO sales (date) VALUES ('2021-01-02');
+INSERT INTO sales (date) VALUES ('2021-01-03');
+INSERT INTO sales (date) VALUES ('2021-02-11');
+INSERT INTO sales (date) VALUES ('2021-02-12');
+INSERT INTO sales (date) VALUES ('2021-02-13');
+INSERT INTO sales (date) VALUES ('2021-03-21');
+INSERT INTO sales (date) VALUES ('2021-03-22');
+INSERT INTO sales (date) VALUES ('2021-03-23');
+INSERT INTO sales (date) VALUES ('2021-04-09');
+INSERT INTO sales (date) VALUES ('2021-04-19');
+INSERT INTO sales (date) VALUES ('2021-04-29');
+
+
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (1,1,150);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (2,4,500);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (3,2,110);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (2,4,100);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (5,3,120);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (6,1,90);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (5,2,50);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (8,3,80);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (9,1,180);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (10,2,30);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (1,4,200);
+INSERT INTO sales_details (sale_id,product_id,count) VALUES (12,3,20);
+##
+
+
+## Решение
+	SELECT p.name AS product_name  ,
+	EXTRACT(YEAR FROM s.date) AS year ,
+	EXTRACT(MONTH FROM s.date) AS month,
+	EXTRACT(DAY FROM s.date) AS day,
+	SUM(d.count) AS total
+	INTO temp_table
+	FROM sales_details d LEFT JOIN products p ON p.id = d.product_id LEFT JOIN sales s ON d.sale_id = s.id
+	GROUP BY 
+	ROLLUP (p.name,extract(YEAR FROM s.date),EXTRACT(MONTH FROM s.date),EXTRACT(DAY FROM s.date));
+
+	
+	SELECT product_name,year,month,day,total FROM temp_table
+	WHERE product_name IS NOT NULL
+	ORDER BY (product_name,year,month,day);
+
+
+	DROP TABLE temp_table # Если есть все запросы выполненны
+##

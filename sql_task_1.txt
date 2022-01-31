@@ -1,0 +1,2 @@
+select replace('Hello, <name> how are you doing today?', '<name>', name) as greetings 	
+from person;

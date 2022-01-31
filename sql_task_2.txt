@@ -1,0 +1,44 @@
+CREATE TABLE documents (
+	id serial primary key;
+	data text);
+
+CREATE SCHEMA logging;
+CREATE TABLE logging.documents_changelog (
+	id serial,
+	document_id integer,
+	old_data text,
+	new_data text
+	);
+
+CREATE FUNCTION change_trigger() RETURNS trigger AS $$
+	BEGIN
+		IF TG_OP = 'INSERT'
+		THEN
+			INSERT INTO logging.documents_changelog (document_id,new_data)
+					VALUES(id(NEW),data(NEW));
+			RETURN NEW;
+		ELSIF TG_OP = 'UPDATE'
+		THEN
+			INSERT INTO logging.documents_changelog (document_id,old_data,new_data)
+					VALUES(id(NEW),data(OLD),data(NEW));
+			RETURN NEW;
+		ELSIF TG_OP = 'DELETE'
+		THEN
+			INSERT INTO logging.documents_changelog (document_id,old_data)
+					VALUES(id(OLD),data(OLD));
+			RETURN OLD;
+		END IF;
+	END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+
+CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON documents
+ 
+        FOR EACH ROW EXECUTE PROCEDURE change_trigger();
+		
+UPDATE documents SET data = 'Some NEW text' where id = 16;		
+INSERT INTO documents (data) VALUES('Some text to test 1');
+INSERT INTO documents (data) VALUES('Some text to test 2');
+INSERT INTO documents (data) VALUES('Some text to test 3');
+DELETE FROM documents WHERE data = 'Some text to test 1';
+
